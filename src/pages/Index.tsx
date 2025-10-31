@@ -1,37 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import Icon from '@/components/ui/icon';
-
-interface Cake {
-  id: number;
-  name: string;
-  description: string;
-  pricePerKg: number;
-  image: string;
-}
-
-interface OrderForm {
-  cake: Cake | null;
-  weight: number;
-  name: string;
-  phone: string;
-  comment: string;
-}
-
-interface PortfolioImage {
-  id: number;
-  url: string;
-  alt: string;
-}
+import Navigation from '@/components/sections/Navigation';
+import HeroSection from '@/components/sections/HeroSection';
+import CatalogSection from '@/components/sections/CatalogSection';
+import PortfolioSection from '@/components/sections/PortfolioSection';
+import DeliverySection from '@/components/sections/DeliverySection';
+import ContactsSection from '@/components/sections/ContactsSection';
+import OrderDialog from '@/components/modals/OrderDialog';
+import CakeEditDialog from '@/components/modals/CakeEditDialog';
+import PortfolioEditDialog from '@/components/modals/PortfolioEditDialog';
+import { Cake, OrderForm, PortfolioImage } from '@/components/sections/types';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -233,257 +210,35 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-secondary/10 to-muted/20">
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-foreground">Délice</h1>
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex gap-8">
-                {['home', 'catalog', 'portfolio', 'delivery', 'contacts'].map((section) => (
-                  <button
-                    key={section}
-                    onClick={() => scrollToSection(section)}
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      activeSection === section ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {section === 'home' && 'Главная'}
-                    {section === 'catalog' && 'Каталог'}
-                    {section === 'portfolio' && 'Портфолио'}
-                    {section === 'delivery' && 'Доставка'}
-                    {section === 'contacts' && 'Контакты'}
-                  </button>
-                ))}
-              </div>
-              <Button
-                variant={isAdmin ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsAdmin(!isAdmin)}
-              >
-                <Icon name={isAdmin ? "Lock" : "Unlock"} size={16} />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation
+        activeSection={activeSection}
+        isAdmin={isAdmin}
+        onSectionChange={scrollToSection}
+        onAdminToggle={() => setIsAdmin(!isAdmin)}
+      />
 
-      <section id="home" className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-5xl text-center animate-fade-in">
-          <h2 className="text-6xl md:text-7xl font-bold mb-6 text-foreground">
-            Авторские торты
-            <br />
-            <span className="text-primary">ручной работы</span>
-          </h2>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Создаём десерты, которые становятся главным украшением вашего праздника
-          </p>
-          <Button
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg rounded-full"
-            onClick={() => scrollToSection('catalog')}
-          >
-            Посмотреть каталог
-          </Button>
-        </div>
-      </section>
+      <HeroSection onCatalogClick={() => scrollToSection('catalog')} />
 
-      <section id="catalog" className="py-20 px-4 bg-white/50">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-5xl font-bold text-foreground">Наши торты</h2>
-            {isAdmin && (
-              <Button onClick={handleAddCake} className="gap-2">
-                <Icon name="Plus" size={20} />
-                Добавить торт
-              </Button>
-            )}
-          </div>
-          <p className="text-center text-muted-foreground mb-16 text-lg">
-            Каждый торт создаётся с любовью из натуральных ингредиентов
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cakes.map((cake, index) => (
-              <Card
-                key={cake.id}
-                className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 animate-scale-in relative"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {isAdmin && (
-                  <div className="absolute top-2 right-2 z-10 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleEditCake(cake)}
-                      className="bg-white/90 hover:bg-white"
-                    >
-                      <Icon name="Edit" size={16} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteCake(cake.id)}
-                      className="bg-red-500/90 hover:bg-red-600"
-                    >
-                      <Icon name="Trash2" size={16} />
-                    </Button>
-                  </div>
-                )}
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={cake.image}
-                    alt={cake.name}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                  />
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="text-2xl font-semibold mb-3 text-foreground">{cake.name}</h3>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">{cake.description}</p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-primary">{cake.pricePerKg} ₽</span>
-                    <span className="text-sm text-muted-foreground">за кг</span>
-                  </div>
-                  {!isAdmin && (
-                    <Button 
-                      onClick={() => handleOrderCake(cake)} 
-                      className="w-full bg-primary hover:bg-primary/90"
-                    >
-                      Заказать
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CatalogSection
+        cakes={cakes}
+        isAdmin={isAdmin}
+        onAddCake={handleAddCake}
+        onEditCake={handleEditCake}
+        onDeleteCake={handleDeleteCake}
+        onOrderCake={handleOrderCake}
+      />
 
-      <section id="portfolio" className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-5xl font-bold text-foreground">Наши работы</h2>
-            {isAdmin && (
-              <Button onClick={handleAddPortfolioImage} className="gap-2">
-                <Icon name="Plus" size={20} />
-                Добавить фото
-              </Button>
-            )}
-          </div>
-          <p className="text-center text-muted-foreground mb-16 text-lg">
-            Посмотрите, какие торты мы создали для наших клиентов
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {portfolioImages.map((image) => (
-              <div key={image.id} className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group relative">
-                {isAdmin && (
-                  <div className="absolute top-2 right-2 z-10 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleEditPortfolioImage(image)}
-                      className="bg-white/90 hover:bg-white"
-                    >
-                      <Icon name="Edit" size={16} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeletePortfolioImage(image.id)}
-                      className="bg-red-500/90 hover:bg-red-600"
-                    >
-                      <Icon name="Trash2" size={16} />
-                    </Button>
-                  </div>
-                )}
-                <img
-                  src={image.url}
-                  alt={image.alt}
-                  className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PortfolioSection
+        portfolioImages={portfolioImages}
+        isAdmin={isAdmin}
+        onAddImage={handleAddPortfolioImage}
+        onEditImage={handleEditPortfolioImage}
+        onDeleteImage={handleDeletePortfolioImage}
+      />
 
-      <section id="delivery" className="py-20 px-4 bg-white/50">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="text-5xl font-bold text-center mb-4 text-foreground">Доставка</h2>
-          <Card className="p-8 md:p-12 border-0 shadow-xl bg-white/80 backdrop-blur">
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <Icon name="Truck" className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">Доставка по городу</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Доставка осуществляется по всему городу за отдельную плату. Стоимость зависит от
-                    района и обговаривается индивидуально при оформлении заказа.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="bg-accent/10 p-3 rounded-full">
-                  <Icon name="Clock" className="text-accent-foreground" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">Время доставки</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Принимаем заказы минимум за 48 часов. Доставляем в удобное для вас время с 9:00
-                    до 21:00.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="bg-secondary/30 p-3 rounded-full">
-                  <Icon name="Package" className="text-secondary-foreground" size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">Упаковка</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Каждый торт упаковывается в специальную коробку с учётом безопасной
-                    транспортировки.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </section>
+      <DeliverySection />
 
-      <section id="contacts" className="py-20 px-4 bg-white/50">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-5xl font-bold mb-4 text-foreground">Контакты</h2>
-          <p className="text-muted-foreground mb-12 text-lg">
-            Свяжитесь с нами удобным способом для оформления заказа
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Button
-              size="lg"
-              className="bg-[#25D366] hover:bg-[#20BA5A] text-white px-8 py-6 text-lg rounded-full gap-3 min-w-[200px]"
-              asChild
-            >
-              <a href="https://wa.me/79518313316" target="_blank" rel="noopener noreferrer">
-                <Icon name="MessageCircle" size={24} />
-                WhatsApp
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              className="bg-[#0088cc] hover:bg-[#006699] text-white px-8 py-6 text-lg rounded-full gap-3 min-w-[200px]"
-              asChild
-            >
-              <a href="https://t.me/+79518313316" target="_blank" rel="noopener noreferrer">
-                <Icon name="Send" size={24} />
-                Telegram
-              </a>
-            </Button>
-          </div>
-          <p className="mt-12 text-muted-foreground text-sm">
-            Режим работы: ежедневно с 9:00 до 21:00
-          </p>
-        </div>
-      </section>
+      <ContactsSection />
 
       <footer className="bg-foreground/5 py-8 px-4 border-t border-border/50">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
@@ -491,194 +246,27 @@ const Index = () => {
         </div>
       </footer>
 
-      <Dialog open={!!orderForm} onOpenChange={() => setOrderForm(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Оформить заказ</DialogTitle>
-          </DialogHeader>
-          {orderForm?.cake && (
-            <div className="space-y-4">
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">{orderForm.cake.name}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{orderForm.cake.description}</p>
-                <div className="text-primary font-bold">{orderForm.cake.pricePerKg} ₽ за кг</div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Вес торта (кг)</label>
-                <Input
-                  type="number"
-                  min="0.5"
-                  step="0.5"
-                  value={orderForm.weight}
-                  onChange={(e) => setOrderForm({ ...orderForm, weight: Number(e.target.value) })}
-                  className="mt-1"
-                />
-              </div>
+      <OrderDialog
+        orderForm={orderForm}
+        onClose={() => setOrderForm(null)}
+        onUpdateForm={setOrderForm}
+        onSubmit={handleSubmitOrder}
+        calculateTotal={calculateTotal}
+      />
 
-              <div className="bg-primary/10 p-3 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Итого:</span>
-                  <span className="text-2xl font-bold text-primary">{calculateTotal()} ₽</span>
-                </div>
-              </div>
+      <CakeEditDialog
+        cake={editingCake}
+        onClose={() => setEditingCake(null)}
+        onUpdate={setEditingCake}
+        onSave={handleSaveCake}
+      />
 
-              <div>
-                <label className="text-sm font-medium">Ваше имя</label>
-                <Input
-                  value={orderForm.name}
-                  onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
-                  placeholder="Иван Иванов"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Телефон</label>
-                <Input
-                  value={orderForm.phone}
-                  onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
-                  placeholder="+7 900 123-45-67"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Комментарий (необязательно)</label>
-                <Textarea
-                  value={orderForm.comment}
-                  onChange={(e) => setOrderForm({ ...orderForm, comment: e.target.value })}
-                  placeholder="Дата, время доставки, пожелания..."
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" onClick={() => setOrderForm(null)} className="flex-1">
-                  Отмена
-                </Button>
-                <Button 
-                  onClick={handleSubmitOrder} 
-                  className="flex-1 bg-[#25D366] hover:bg-[#20BA5A] text-white gap-2"
-                  disabled={!orderForm.name || !orderForm.phone}
-                >
-                  <Icon name="MessageCircle" size={18} />
-                  Отправить в WhatsApp
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editingCake} onOpenChange={() => setEditingCake(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Редактировать торт</DialogTitle>
-          </DialogHeader>
-          {editingCake && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Название</label>
-                <Input
-                  value={editingCake.name}
-                  onChange={(e) => setEditingCake({ ...editingCake, name: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Описание</label>
-                <Textarea
-                  value={editingCake.description}
-                  onChange={(e) => setEditingCake({ ...editingCake, description: e.target.value })}
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Цена за кг (₽)</label>
-                <Input
-                  type="number"
-                  value={editingCake.pricePerKg}
-                  onChange={(e) => setEditingCake({ ...editingCake, pricePerKg: Number(e.target.value) })}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">URL изображения</label>
-                <Input
-                  value={editingCake.image}
-                  onChange={(e) => setEditingCake({ ...editingCake, image: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setEditingCake(null)}>
-                  Отмена
-                </Button>
-                <Button onClick={handleSaveCake}>
-                  Сохранить
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editingPortfolioImage} onOpenChange={() => setEditingPortfolioImage(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Редактировать фото</DialogTitle>
-          </DialogHeader>
-          {editingPortfolioImage && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">URL изображения</label>
-                <Input
-                  value={editingPortfolioImage.url}
-                  onChange={(e) => setEditingPortfolioImage({ ...editingPortfolioImage, url: e.target.value })}
-                  placeholder="https://..."
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Загрузите фото на любой хостинг и вставьте ссылку
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Описание</label>
-                <Input
-                  value={editingPortfolioImage.alt}
-                  onChange={(e) => setEditingPortfolioImage({ ...editingPortfolioImage, alt: e.target.value })}
-                  placeholder="Описание торта"
-                  className="mt-1"
-                />
-              </div>
-              {editingPortfolioImage.url && (
-                <div>
-                  <label className="text-sm font-medium block mb-2">Предпросмотр</label>
-                  <img 
-                    src={editingPortfolioImage.url} 
-                    alt="preview" 
-                    className="w-full h-48 object-cover rounded-lg"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
-                    }}
-                  />
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setEditingPortfolioImage(null)}>
-                  Отмена
-                </Button>
-                <Button onClick={handleSavePortfolioImage} disabled={!editingPortfolioImage.url}>
-                  Сохранить
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PortfolioEditDialog
+        image={editingPortfolioImage}
+        onClose={() => setEditingPortfolioImage(null)}
+        onUpdate={setEditingPortfolioImage}
+        onSave={handleSavePortfolioImage}
+      />
     </div>
   );
 };
