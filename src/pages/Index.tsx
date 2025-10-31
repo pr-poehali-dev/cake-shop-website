@@ -19,10 +19,19 @@ interface Cake {
   image: string;
 }
 
+interface OrderForm {
+  cake: Cake | null;
+  weight: number;
+  name: string;
+  phone: string;
+  comment: string;
+}
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingCake, setEditingCake] = useState<Cake | null>(null);
+  const [orderForm, setOrderForm] = useState<OrderForm | null>(null);
   const [cakes, setCakes] = useState<Cake[]>([
     {
       id: 1,
@@ -108,6 +117,33 @@ const Index = () => {
   const handleDeleteCake = (id: number) => {
     const updatedCakes = cakes.filter(c => c.id !== id);
     saveCakes(updatedCakes);
+  };
+
+  const handleOrderCake = (cake: Cake) => {
+    setOrderForm({
+      cake,
+      weight: 1,
+      name: '',
+      phone: '',
+      comment: ''
+    });
+  };
+
+  const calculateTotal = () => {
+    if (!orderForm?.cake) return 0;
+    return orderForm.cake.pricePerKg * orderForm.weight;
+  };
+
+  const handleSubmitOrder = () => {
+    if (!orderForm?.cake || !orderForm.name || !orderForm.phone) return;
+    
+    const total = calculateTotal();
+    const message = `🎂 Новый заказ\n\nТорт: ${orderForm.cake.name}\nВес: ${orderForm.weight} кг\nСтоимость: ${total} ₽\n\nКлиент: ${orderForm.name}\nТелефон: ${orderForm.phone}${orderForm.comment ? `\nКомментарий: ${orderForm.comment}` : ''}`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/79518313316?text=${encodedMessage}`, '_blank');
+    
+    setOrderForm(null);
   };
 
   const scrollToSection = (section: string) => {
@@ -222,10 +258,18 @@ const Index = () => {
                 <CardContent className="p-6">
                   <h3 className="text-2xl font-semibold mb-3 text-foreground">{cake.name}</h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed">{cake.description}</p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <span className="text-2xl font-bold text-primary">{cake.pricePerKg} ₽</span>
                     <span className="text-sm text-muted-foreground">за кг</span>
                   </div>
+                  {!isAdmin && (
+                    <Button 
+                      onClick={() => handleOrderCake(cake)} 
+                      className="w-full bg-primary hover:bg-primary/90"
+                    >
+                      Заказать
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -318,6 +362,87 @@ const Index = () => {
           <p>© 2024 Délice. Все права защищены.</p>
         </div>
       </footer>
+
+      <Dialog open={!!orderForm} onOpenChange={() => setOrderForm(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Оформить заказ</DialogTitle>
+          </DialogHeader>
+          {orderForm?.cake && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h3 className="font-semibold text-lg mb-2">{orderForm.cake.name}</h3>
+                <p className="text-sm text-muted-foreground mb-3">{orderForm.cake.description}</p>
+                <div className="text-primary font-bold">{orderForm.cake.pricePerKg} ₽ за кг</div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Вес торта (кг)</label>
+                <Input
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={orderForm.weight}
+                  onChange={(e) => setOrderForm({ ...orderForm, weight: Number(e.target.value) })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Итого:</span>
+                  <span className="text-2xl font-bold text-primary">{calculateTotal()} ₽</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Ваше имя</label>
+                <Input
+                  value={orderForm.name}
+                  onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
+                  placeholder="Иван Иванов"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Телефон</label>
+                <Input
+                  value={orderForm.phone}
+                  onChange={(e) => setOrderForm({ ...orderForm, phone: e.target.value })}
+                  placeholder="+7 900 123-45-67"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Комментарий (необязательно)</label>
+                <Textarea
+                  value={orderForm.comment}
+                  onChange={(e) => setOrderForm({ ...orderForm, comment: e.target.value })}
+                  placeholder="Дата, время доставки, пожелания..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setOrderForm(null)} className="flex-1">
+                  Отмена
+                </Button>
+                <Button 
+                  onClick={handleSubmitOrder} 
+                  className="flex-1 bg-[#25D366] hover:bg-[#20BA5A] text-white gap-2"
+                  disabled={!orderForm.name || !orderForm.phone}
+                >
+                  <Icon name="MessageCircle" size={18} />
+                  Отправить в WhatsApp
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!editingCake} onOpenChange={() => setEditingCake(null)}>
         <DialogContent className="max-w-2xl">
