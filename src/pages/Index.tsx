@@ -27,11 +27,45 @@ interface OrderForm {
   comment: string;
 }
 
+interface PortfolioImage {
+  id: number;
+  url: string;
+  alt: string;
+}
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingCake, setEditingCake] = useState<Cake | null>(null);
   const [orderForm, setOrderForm] = useState<OrderForm | null>(null);
+  const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([
+    {
+      id: 1,
+      url: 'https://cdn.poehali.dev/files/c7eeed4e-4c70-4108-ae2c-d3f613806c18.jpeg',
+      alt: 'Белый торт с цветами Happy Birthday'
+    },
+    {
+      id: 2,
+      url: 'https://cdn.poehali.dev/files/75ab31b5-5da3-4ac8-831a-bf47eb8c3ff6.jpeg',
+      alt: 'Торт в форме сердца с тюльпанами'
+    },
+    {
+      id: 3,
+      url: 'https://cdn.poehali.dev/files/c1eb4f91-c63b-4643-b28a-72ba731c69db.jpeg',
+      alt: 'Торт 1 сентября с детьми'
+    },
+    {
+      id: 4,
+      url: 'https://cdn.poehali.dev/files/3feb9d52-c943-44ba-ad6c-6f62c5b99fc7.jpeg',
+      alt: 'Розовый торт с бабочками Happy Birthday'
+    },
+    {
+      id: 5,
+      url: 'https://cdn.poehali.dev/files/c0ebdb55-aeb2-45d0-b4ed-da3258f255a5.jpeg',
+      alt: 'Торт с короной С Днем Рождения'
+    }
+  ]);
+  const [editingPortfolioImage, setEditingPortfolioImage] = useState<PortfolioImage | null>(null);
   const [cakes, setCakes] = useState<Cake[]>([
     {
       id: 1,
@@ -82,11 +116,20 @@ const Index = () => {
     if (savedCakes) {
       setCakes(JSON.parse(savedCakes));
     }
+    const savedPortfolio = localStorage.getItem('portfolioImages');
+    if (savedPortfolio) {
+      setPortfolioImages(JSON.parse(savedPortfolio));
+    }
   }, []);
 
   const saveCakes = (newCakes: Cake[]) => {
     setCakes(newCakes);
     localStorage.setItem('cakes', JSON.stringify(newCakes));
+  };
+
+  const savePortfolio = (newImages: PortfolioImage[]) => {
+    setPortfolioImages(newImages);
+    localStorage.setItem('portfolioImages', JSON.stringify(newImages));
   };
 
   const handleEditCake = (cake: Cake) => {
@@ -144,6 +187,42 @@ const Index = () => {
     window.open(`https://wa.me/79518313316?text=${encodedMessage}`, '_blank');
     
     setOrderForm(null);
+  };
+
+  const handleAddPortfolioImage = () => {
+    const newImage: PortfolioImage = {
+      id: Date.now(),
+      url: '',
+      alt: 'Новое фото'
+    };
+    setEditingPortfolioImage(newImage);
+  };
+
+  const handleEditPortfolioImage = (image: PortfolioImage) => {
+    setEditingPortfolioImage({ ...image });
+  };
+
+  const handleSavePortfolioImage = () => {
+    if (!editingPortfolioImage) return;
+    
+    const existingIndex = portfolioImages.findIndex(img => img.id === editingPortfolioImage.id);
+    let updatedImages: PortfolioImage[];
+    
+    if (existingIndex >= 0) {
+      updatedImages = portfolioImages.map(img => 
+        img.id === editingPortfolioImage.id ? editingPortfolioImage : img
+      );
+    } else {
+      updatedImages = [...portfolioImages, editingPortfolioImage];
+    }
+    
+    savePortfolio(updatedImages);
+    setEditingPortfolioImage(null);
+  };
+
+  const handleDeletePortfolioImage = (id: number) => {
+    const updatedImages = portfolioImages.filter(img => img.id !== id);
+    savePortfolio(updatedImages);
   };
 
   const scrollToSection = (section: string) => {
@@ -280,46 +359,48 @@ const Index = () => {
 
       <section id="portfolio" className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-5xl font-bold text-center mb-4 text-foreground">Наши работы</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-5xl font-bold text-foreground">Наши работы</h2>
+            {isAdmin && (
+              <Button onClick={handleAddPortfolioImage} className="gap-2">
+                <Icon name="Plus" size={20} />
+                Добавить фото
+              </Button>
+            )}
+          </div>
           <p className="text-center text-muted-foreground mb-16 text-lg">
             Посмотрите, какие торты мы создали для наших клиентов
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-              <img
-                src="https://cdn.poehali.dev/files/c7eeed4e-4c70-4108-ae2c-d3f613806c18.jpeg"
-                alt="Белый торт с цветами Happy Birthday"
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-              <img
-                src="https://cdn.poehali.dev/files/75ab31b5-5da3-4ac8-831a-bf47eb8c3ff6.jpeg"
-                alt="Торт в форме сердца с тюльпанами"
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-              <img
-                src="https://cdn.poehali.dev/files/c1eb4f91-c63b-4643-b28a-72ba731c69db.jpeg"
-                alt="Торт 1 сентября с детьми"
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-              <img
-                src="https://cdn.poehali.dev/files/3feb9d52-c943-44ba-ad6c-6f62c5b99fc7.jpeg"
-                alt="Розовый торт с бабочками Happy Birthday"
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group">
-              <img
-                src="https://cdn.poehali.dev/files/c0ebdb55-aeb2-45d0-b4ed-da3258f255a5.jpeg"
-                alt="Торт с короной С Днем Рождения"
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
+            {portfolioImages.map((image) => (
+              <div key={image.id} className="overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group relative">
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 z-10 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleEditPortfolioImage(image)}
+                      className="bg-white/90 hover:bg-white"
+                    >
+                      <Icon name="Edit" size={16} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeletePortfolioImage(image.id)}
+                      className="bg-red-500/90 hover:bg-red-600"
+                    >
+                      <Icon name="Trash2" size={16} />
+                    </Button>
+                  </div>
+                )}
+                <img
+                  src={image.url}
+                  alt={image.alt}
+                  className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -537,6 +618,60 @@ const Index = () => {
                   Отмена
                 </Button>
                 <Button onClick={handleSaveCake}>
+                  Сохранить
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingPortfolioImage} onOpenChange={() => setEditingPortfolioImage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Редактировать фото</DialogTitle>
+          </DialogHeader>
+          {editingPortfolioImage && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">URL изображения</label>
+                <Input
+                  value={editingPortfolioImage.url}
+                  onChange={(e) => setEditingPortfolioImage({ ...editingPortfolioImage, url: e.target.value })}
+                  placeholder="https://..."
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Загрузите фото на любой хостинг и вставьте ссылку
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Описание</label>
+                <Input
+                  value={editingPortfolioImage.alt}
+                  onChange={(e) => setEditingPortfolioImage({ ...editingPortfolioImage, alt: e.target.value })}
+                  placeholder="Описание торта"
+                  className="mt-1"
+                />
+              </div>
+              {editingPortfolioImage.url && (
+                <div>
+                  <label className="text-sm font-medium block mb-2">Предпросмотр</label>
+                  <img 
+                    src={editingPortfolioImage.url} 
+                    alt="preview" 
+                    className="w-full h-48 object-cover rounded-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
+                    }}
+                  />
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setEditingPortfolioImage(null)}>
+                  Отмена
+                </Button>
+                <Button onClick={handleSavePortfolioImage} disabled={!editingPortfolioImage.url}>
                   Сохранить
                 </Button>
               </div>
